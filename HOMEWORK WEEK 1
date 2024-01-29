@@ -1,0 +1,63 @@
+homework:
+
+Question 1:
+docker run --rm -it --entrypoint bash python:3.9
+
+
+Prepare Postgres:
+winpty docker run -it \
+  -e POSTGRES_USER="root" \
+  -e POSTGRES_PASSWORD="root" \
+  -e POSTGRES_DB="ny_taxi" \
+  -v "C:\Users\Utente\Desktop\data_engineering_zoomcamp\week_1_basics_n_setup\homework\ny_taxi_postgres_data:/var/lib/postgresql/data" \
+  -p 5432:5432 \
+  postgres:13
+
+
+URL="https://github.com/DataTalksClub/nyc-tlc-data/releases/download/green/green_tripdata_2019-09.csv.gz"
+
+python ingest_data.py \
+  --user=root \
+  --password=root \
+  --host=localhost \
+  --port=5432 \
+  --db=ny_taxi \
+  --table_name=green_taxi_trips \
+  --url=${URL}
+
+
+Question 3:
+select count(1) from green_taxi_trips where lpep_pickup_datetime >= '2019-09-18 00:00:00' and  lpep_dropoff_
+ datetime <=  '2019-09-18 23:59:59'
+
+Question 4:
+select cast(lpep_pickup_datetime as date) as day
+, max(trip_distance) from green_taxi_trips group by cast(lpe
+ p_pickup_datetime as date) order by max(trip_distance) desc;
+
+
+Question 5:
+select zp."Borough", sum(g."total_amount")
+from green_taxi_trips g
+left join zones zp on g."PULocationID" = zp."LocationID"
+left join zones zd on g."DOLocationID" = zd."LocationID"
+where g."lpep_pickup_datetime" >= '2019-09-18 00:00:00'
+and  g."lpep_pickup_datetime" <= '2019-09-18 23:59:59'
+and zp."Borough" is not null
+and zd."Borough" is not null
+group by
+zp."Borough"
+order by sum(g."total_amount") desc;
+
+Question 6:
+select zd."Zone", max(g."tip_amount")
+from green_taxi_trips g
+left join zones zp on g."PULocationID" = zp."LocationID"
+left join zones zd on g."DOLocationID" = zd."LocationID"
+where g."lpep_pickup_datetime" >= '2019-09-01 00:00:00'
+and  g."lpep_pickup_datetime" <= '2019-09-30 23:59:59'
+and zp."Borough" is not null
+and zd."Borough" is not null
+and zp."Zone" = 'Astoria'
+group by zd."Zone"
+order by max(g."tip_amount") desc;
