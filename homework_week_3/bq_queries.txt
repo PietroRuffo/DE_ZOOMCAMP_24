@@ -1,0 +1,66 @@
+### Create External Table
+
+create or replace external table dtc-de-course-411815.hw3.green_taxi_2022_external_table
+options(
+  format='parquet',
+  uris=['gs://homework-week-3-pietro-ruffo/*.parquet']
+);
+
+
+select count(*) from dtc-de-course-411815.hw3.green_taxi_2022_external_table;
+
+
+#### Create Materialized Table
+
+create or replace table dtc-de-course-411815.hw3.green_taxi_2022_materialized_table
+as(
+with t1 as(
+select * from dtc-de-course-411815.hw3.green_taxi_2022_external_table
+)
+select *, TIMESTAMP_MICROS(CAST(lpep_pickup_datetime / 1000 AS INT64)) as lpep_pickup_datetime_adj
+from t1
+);
+
+alter table dtc-de-course-411815.hw3.green_taxi_2022_materialized_table
+drop column lpep_pickup_datetime;
+
+alter table dtc-de-course-411815.hw3.green_taxi_2022_materialized_table
+rename column lpep_pickup_datetime_adj to  lpep_pickup_datetime
+
+### Create Partition Table
+
+create or replace table `dtc-de-course-411815.hw3.green_taxi_2022_partion_table`
+partition by date(lpep_pickup_datetime)
+cluster by PUlocationID as(
+  select * from `dtc-de-course-411815.hw3.green_taxi_2022_materialized_table`
+)
+
+## Question 1
+
+select count(*) from dtc-de-course-411815.hw3.green_taxi_2022_materialized_table
+
+## Question 2
+
+select count(distinct PULocationID) from dtc-de-course-411815.hw3.green_taxi_2022_materialized_table
+
+select count(distinct PULocationID) from dtc-de-course-411815.hw3.green_taxi_2022_external_table
+
+## Question 3
+
+select count(*)
+from dtc-de-course-411815.hw3.green_taxi_2022_materialized_table
+where fare_amount = 0
+
+## Question 5
+
+select distinct PULocationID
+from dtc-de-course-411815.hw3.green_taxi_2022_partion_table
+where lpep_pickup_datetime between '2022-06-01' and '2022-06-30'
+
+select distinct PULocationID
+from dtc-de-course-411815.hw3.green_taxi_2022_materialized_table
+where lpep_pickup_datetime between '2022-06-01' and '2022-06-30'
+
+
+
+
